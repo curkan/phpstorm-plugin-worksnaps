@@ -1,0 +1,77 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
+    <id>com.github.curkan.phpstorm-plugin-worksnaps</id>
+
+    <!-- Public plugin name should be written in Title Case.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
+    <name>Worksnaps Time Tracker</name>
+
+    <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+    <vendor email="your-email@example.com" url="https://github.com/curkan">Curkan</vendor>
+
+    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+         Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
+    <description><![CDATA[
+        <h2>Worksnaps Time Tracker for PhpStorm</h2>
+        <p>Display your Worksnaps time tracking statistics directly in the PhpStorm status bar.</p>
+
+        <h3>Features</h3>
+        <ul>
+            <li>Real-time display of worked hours for today</li>
+            <li>Activity percentage with color coding (green ≥80%, yellow 60-79%, red <60%)</li>
+            <li>Remaining time until target hours (configurable, default: 8 hours)</li>
+            <li>Automatic refresh every 60 seconds (configurable)</li>
+            <li>Caching for reliability when API is unavailable</li>
+            <li>Fully customizable display format</li>
+        </ul>
+
+        <h3>Configuration</h3>
+        <p>Go to <strong>Settings/Preferences → Tools → Worksnaps</strong> to configure:</p>
+        <ul>
+            <li>API Token (required)</li>
+            <li>Project ID (required)</li>
+            <li>User ID (optional, will be auto-detected)</li>
+            <li>Update interval</li>
+            <li>Target working hours per day</li>
+            <li>Display preferences</li>
+        </ul>
+
+        <h3>How to get API Token</h3>
+        <ol>
+            <li>Log in to your Worksnaps account</li>
+            <li>Go to <strong>Profile & Settings → Web Service API</strong></li>
+            <li>Click "Show my API Token"</li>
+            <li>Copy the token and paste it in plugin settings</li>
+        </ol>
+    ]]></description>
+
+    <!-- Product and plugin compatibility requirements.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Add your extensions here -->
+        <applicationConfigurable
+                parentId="tools"
+                instance="com.github.curkan.worksnaps.settings.WorksnapsConfigurable"
+                id="com.github.curkan.worksnaps.settings.WorksnapsConfigurable"
+                displayName="Worksnaps"/>
+
+        <applicationService
+                serviceImplementation="com.github.curkan.worksnaps.settings.WorksnapsSettings"/>
+
+        <statusBarWidgetFactory
+                implementation="com.github.curkan.worksnaps.ui.WorksnapsStatusBarWidgetFactory"
+                id="com.github.curkan.worksnaps.ui.WorksnapsStatusBarWidgetFactory"
+                anchor="after position=right"
+                order="last"/>
+    </extensions>
+
+    <applicationListeners>
+        <listener
+                class="com.github.curkan.worksnaps.listeners.ProjectOpenListener"
+                topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    </applicationListeners>
+</idea-plugin>
