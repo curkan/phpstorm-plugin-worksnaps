@@ -21,7 +21,7 @@ Display your Worksnaps time tracking statistics directly in the PhpStorm status 
 - 💾 Caching for reliability when API is unavailable
 - ⚙️ Fully customizable display format
 
-## Screenshots
+## Display Example
 
 Status bar shows: `WS: 9:30 (+1:30) | 87%`
 
