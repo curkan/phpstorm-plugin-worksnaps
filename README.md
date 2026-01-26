@@ -1,277 +1,283 @@
 # Worksnaps Plugin for PhpStorm
 
+[Русский](README.md) | [English](README_EN.md)
+
+---
+
+![Worksnaps Plugin](misc/phpstorm-worksnaps.png)
+
 ![PhpStorm](https://img.shields.io/badge/PhpStorm-2022.3+-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Version](https://img.shields.io/badge/version-1.0.0-brightgreen.svg)
 
-Display your Worksnaps time tracking statistics directly in the PhpStorm status bar.
+Отображайте статистику отслеживания времени Worksnaps прямо в строке состояния PhpStorm.
 
-## Features
+## Возможности
 
-- 📊 Real-time display of worked hours for today
-- 🎯 Activity percentage with color coding (green ≥80%, yellow 60-79%, red <60%)
-- ⏱️ Remaining time until target hours (configurable, default: 8 hours)
-- 🔄 Automatic refresh every 60 seconds (configurable)
-- 💾 Caching for reliability when API is unavailable
-- ⚙️ Fully customizable display format
+- 📊 Отображение отработанных часов за сегодня в реальном времени
+- 🎯 Процент активности с цветовым кодированием (зеленый ≥80%, желтый 60-79%, красный <60%)
+- ⏱️ Оставшееся время до целевого количества часов (настраивается, по умолчанию: 8 часов)
+- 🔄 Автоматическое обновление каждые 60 секунд (настраивается)
+- 💾 Кэширование для надежности при недоступности API
+- ⚙️ Полностью настраиваемый формат отображения
 
-## Screenshots
+## Скриншоты
 
-Status bar shows: `WS: 4:50 (-3:10) 78%`
+Строка состояния показывает: `WS: 9:30 (+1:30) | 87%`
 
-Where:
-- `4:50` = worked hours today (hours:minutes, rounded to 10-minute intervals)
-- `(-3:10)` = remaining time until target (red if negative, green if overtime)
-- `78%` = activity percentage (color-coded: green for ≥80%, yellow for 60-79%, red for <60%)
+Где:
+- `9:30` = отработано часов сегодня (часы:минуты, округлено до 10-минутных интервалов)
+- `(+1:30)` = переработка 1 час 30 минут (зеленый если переработка, красный если осталось работать)
+- `87%` = процент активности (зеленый для ≥80%, желтый для 60-79%, красный для <60%)
 
-## Requirements
+## Требования
 
-- PhpStorm 2022.3 or later
-- Active Worksnaps account with API access
-- Java 17 or later (for plugin development only)
+- PhpStorm 2022.3 или новее
+- Активный аккаунт Worksnaps с доступом к API
+- Java 17 или новее (только для разработки плагина)
 
-## Installation
+## Установка
 
-### From JetBrains Marketplace (Coming Soon)
+### Из JetBrains Marketplace (Скоро)
 
-1. Open PhpStorm
-2. Go to **Settings/Preferences → Plugins**
-3. Search for "Worksnaps"
-4. Click **Install**
-5. Restart PhpStorm
+1. Откройте PhpStorm
+2. Перейдите в **Settings/Preferences → Plugins**
+3. Найдите "Worksnaps"
+4. Нажмите **Install**
+5. Перезапустите PhpStorm
 
-### Manual Installation
+### Ручная установка
 
-1. Download the latest release from [Releases](https://github.com/curkan/phpstorm-plugin-worksnaps/releases)
-2. In PhpStorm, go to **Settings/Preferences → Plugins**
-3. Click the gear icon ⚙️ and select **Install Plugin from Disk...**
-4. Select the downloaded `.zip` file
-5. Restart PhpStorm
+1. Скачайте последний релиз из [Releases](https://github.com/curkan/phpstorm-plugin-worksnaps/releases)
+2. В PhpStorm перейдите в **Settings/Preferences → Plugins**
+3. Нажмите на иконку шестеренки ⚙️ и выберите **Install Plugin from Disk...**
+4. Выберите скачанный `.zip` файл
+5. Перезапустите PhpStorm
 
-### Build from Source
+### Сборка из исходников
 
 ```bash
-# Clone the repository
+# Клонируйте репозиторий
 git clone https://github.com/curkan/phpstorm-plugin-worksnaps.git
 cd phpstorm-plugin-worksnaps
 
-# Build the plugin
+# Соберите плагин
 ./gradlew buildPlugin
 
-# The plugin will be in build/distributions/
+# Плагин будет в build/distributions/
 ```
 
-## Configuration
+## Настройка
 
-### 1. Get Your API Token
+### 1. Получите ваш API токен
 
-1. Log in to your Worksnaps account
-2. Go to **Profile & Settings → Web Service API**
-3. Click "Show my API Token"
-4. Copy the token
+1. Войдите в ваш аккаунт Worksnaps
+2. Перейдите в **Profile & Settings → Web Service API**
+3. Нажмите "Show my API Token"
+4. Скопируйте токен
 
-### 2. Get Your Project ID
+### 2. Получите ID проекта
 
-You can find your project ID in two ways:
+Вы можете найти ID проекта двумя способами:
 
-**Option A: From URL**
-- Open your project in Worksnaps web interface
-- The project ID is in the URL: `https://app.worksnaps.com/projects/YOUR_PROJECT_ID`
+**Вариант A: Из URL**
+- Откройте ваш проект в веб-интерфейсе Worksnaps
+- ID проекта находится в URL: `https://app.worksnaps.com/projects/YOUR_PROJECT_ID`
 
-**Option B: Via API**
+**Вариант B: Через API**
 ```bash
 curl -u "YOUR_API_TOKEN:" https://api.worksnaps.com/api/projects.xml
 ```
 
-### 3. Configure the Plugin
+### 3. Настройте плагин
 
-1. Open PhpStorm
-2. Go to **Settings/Preferences → Tools → Worksnaps**
-3. Enter your configuration:
-   - **API Token** (required): Your Worksnaps API token
-   - **Project ID** (required): Your Worksnaps project ID
-   - **User ID** (optional): Leave empty to auto-detect
-   - **Update Interval**: How often to refresh data (default: 60 seconds)
-   - **Target Hours**: Your daily work goal (default: 8 hours)
-   - **Display Options**: Choose what to show in the status bar
+1. Откройте PhpStorm
+2. Перейдите в **Settings/Preferences → Tools → Worksnaps**
+3. Введите вашу конфигурацию:
+   - **API Token** (обязательно): Ваш Worksnaps API токен
+   - **Project ID** (обязательно): ID вашего Worksnaps проекта
+   - **User ID** (опционально): Оставьте пустым для автоопределения
+   - **Update Interval**: Как часто обновлять данные (по умолчанию: 60 секунд)
+   - **Target Hours**: Ваша дневная цель работы (по умолчанию: 8 часов)
+   - **Display Options**: Выберите что показывать в строке состояния
 
-4. Click **Apply** and **OK**
+4. Нажмите **Apply** и **OK**
 
-## Usage
+## Использование
 
-Once configured, the plugin will automatically display your Worksnaps statistics in the PhpStorm status bar.
+После настройки плагин автоматически отобразит вашу статистику Worksnaps в строке состояния PhpStorm.
 
-### Status Bar Display
+### Отображение в строке состояния
 
-The widget shows:
-- Prefix (customizable, default: "WS:")
-- Worked time (if enabled)
-- Remaining time in parentheses (if enabled)
-- Activity percentage (if enabled)
-- Warning indicator (⚠) if using cached data due to API error
+Виджет показывает:
+- Префикс (настраивается, по умолчанию: "WS:")
+- Отработанное время (если включено)
+- Оставшееся время в скобках (если включено)
+- Процент активности (если включено)
+- Индикатор предупреждения (⚠) если используются кэшированные данные из-за ошибки API
 
-### Click Actions
+### Действия по клику
 
-Click on the widget in the status bar to manually refresh the data.
+Нажмите на виджет в строке состояния для ручного обновления данных.
 
-### Display States
+### Состояния отображения
 
-- `WS: N/A` - API token or Project ID not configured
-- `WS: Loading...` - Fetching data from API
-- `WS: 4:50 (-3:10) 78%` - Normal display
-- `WS: 8:30 (+0:30) 85%` - Overtime (30 minutes over target)
-- `WS: 4:50 (-3:10) 78% ⚠` - Using cached data due to API error
-- `WS: ⚠ Error` - API error and no cached data available
+- `WS: N/A` - API токен или Project ID не настроены
+- `WS: Loading...` - Загрузка данных из API
+- `WS: 4:50 (-3:10) | 78%` - Обычное отображение
+- `WS: 8:30 (+0:30) | 85%` - Переработка (30 минут сверх цели)
+- `WS: 4:50 (-3:10) | 78% ⚠` - Используются кэшированные данные из-за ошибки API
+- `WS: ⚠ Error` - Ошибка API и нет кэшированных данных
 
-## Settings Reference
+## Справочник настроек
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| API Token | (empty) | Your Worksnaps API token (required) |
-| Project ID | (empty) | Your Worksnaps project ID (required) |
-| User ID | (empty) | Your user ID (optional, auto-detected if empty) |
-| Update Interval | 60 | Refresh interval in seconds |
-| Target Hours | 8.0 | Daily work goal in hours |
-| Prefix | "WS:" | Text shown before statistics |
-| Show Time | ✓ | Display worked hours |
-| Show Activity | ✓ | Display activity percentage |
-| Show Remaining | ✓ | Display remaining time until target |
+| Настройка | По умолчанию | Описание |
+|-----------|--------------|----------|
+| API Token | (пусто) | Ваш Worksnaps API токен (обязательно) |
+| Project ID | (пусто) | ID вашего Worksnaps проекта (обязательно) |
+| User ID | (пусто) | Ваш ID пользователя (опционально, автоопределяется если пусто) |
+| Update Interval | 60 | Интервал обновления в секундах |
+| Target Hours | 8.0 | Дневная цель работы в часах |
+| Prefix | "WS:" | Текст перед статистикой |
+| Show Time | ✓ | Показывать отработанные часы |
+| Show Activity | ✓ | Показывать процент активности |
+| Show Remaining | ✓ | Показывать оставшееся время до цели |
 
-## Troubleshooting
+## Решение проблем
 
-### Widget shows "WS: N/A"
+### Виджет показывает "WS: N/A"
 
-**Solution**: Configure your API token and project ID in **Settings → Tools → Worksnaps**
+**Решение**: Настройте ваш API токен и project ID в **Settings → Tools → Worksnaps**
 
-### Widget shows "WS: ⚠ Error"
+### Виджет показывает "WS: ⚠ Error"
 
-Possible causes:
-- Invalid API token
-- Invalid project ID
-- No internet connection
-- Worksnaps API is down
+Возможные причины:
+- Неверный API токен
+- Неверный project ID
+- Нет подключения к интернету
+- Worksnaps API недоступен
 
-**Solution**:
-1. Verify your API token is correct
-2. Verify your project ID is correct
-3. Check your internet connection
-4. Test API manually:
+**Решение**:
+1. Проверьте правильность вашего API токена
+2. Проверьте правильность вашего project ID
+3. Проверьте интернет-соединение
+4. Проверьте API вручную:
    ```bash
    curl -u "YOUR_TOKEN:" https://api.worksnaps.com/api/projects.xml
    ```
 
-### Data not updating
+### Данные не обновляются
 
-**Solution**:
-1. Click on the widget to manually refresh
-2. Check the update interval in settings
-3. Restart PhpStorm
+**Решение**:
+1. Кликните на виджет для ручного обновления
+2. Проверьте интервал обновления в настройках
+3. Перезапустите PhpStorm
 
-### Wrong activity percentage
+### Неправильный процент активности
 
-**Note**: Worksnaps calculates activity based on keyboard and mouse usage. The plugin shows the average activity across all 10-minute time entries for today.
+**Примечание**: Worksnaps рассчитывает активность на основе использования клавиатуры и мыши. Плагин показывает среднюю активность по всем 10-минутным записям времени за сегодня.
 
-## How It Works
+## Как это работает
 
-1. Plugin fetches time entries from Worksnaps API for the current day
-2. Calculates total worked hours and average activity percentage
-3. Results are cached for 60 seconds
-4. If API is unavailable, uses cached data with warning indicator
-5. Status bar updates automatically based on configured interval
+1. Плагин загружает записи времени из Worksnaps API за текущий день
+2. Рассчитывает общее количество отработанных часов и средний процент активности
+3. Результаты кэшируются на 60 секунд
+4. Если API недоступен, используются кэшированные данные с индикатором предупреждения
+5. Строка состояния обновляется автоматически на основе настроенного интервала
 
-## API Usage
+## Использование API
 
 - **Endpoint**: `https://api.worksnaps.com/api/projects/{project_id}/time_entries.xml`
-- **Authentication**: HTTP Basic Auth (API token as username, empty password)
-- **Rate Limiting**: Plugin uses caching to minimize API requests
-- **Data Format**: XML (parsed using regex)
+- **Аутентификация**: HTTP Basic Auth (API токен как имя пользователя, пустой пароль)
+- **Ограничение частоты**: Плагин использует кэширование для минимизации запросов к API
+- **Формат данных**: XML (парсится с помощью regex)
 
-## Privacy & Security
+## Конфиденциальность и безопасность
 
-- Your API token is stored securely in PhpStorm's credential store
-- Plugin only reads time entry data for your configured project
-- No data is sent to third parties
-- All API communication is over HTTPS
+- Ваш API токен хранится безопасно в хранилище учетных данных PhpStorm
+- Плагин читает только данные записей времени для вашего настроенного проекта
+- Никакие данные не отправляются третьим лицам
+- Вся коммуникация с API происходит через HTTPS
 
-## Development
+## Разработка
 
-### Setup
+### Настройка
 
 ```bash
-# Clone repository
+# Клонируйте репозиторий
 git clone https://github.com/curkan/phpstorm-plugin-worksnaps.git
 cd phpstorm-plugin-worksnaps
 
-# Run plugin in development mode
+# Запустите плагин в режиме разработки
 ./gradlew runIde
 ```
 
-### Project Structure
+### Структура проекта
 
 ```
 src/main/kotlin/com/github/curkan/worksnaps/
 ├── api/
-│   └── WorksnapsApiClient.kt       # API client for Worksnaps
+│   └── WorksnapsApiClient.kt       # API клиент для Worksnaps
 ├── service/
-│   └── WorksnapsService.kt         # Service with caching and auto-refresh
+│   └── WorksnapsService.kt         # Сервис с кэшированием и авто-обновлением
 ├── settings/
-│   ├── WorksnapsSettings.kt        # Persistent settings
-│   └── WorksnapsConfigurable.kt    # Settings UI
+│   ├── WorksnapsSettings.kt        # Постоянные настройки
+│   └── WorksnapsConfigurable.kt    # UI настроек
 ├── ui/
-│   ├── WorksnapsStatusBarWidget.kt # Status bar widget
+│   ├── WorksnapsStatusBarWidget.kt # Виджет строки состояния
 │   └── WorksnapsStatusBarWidgetFactory.kt
 └── listeners/
-    └── ProjectOpenListener.kt      # Auto-start on project open
+    └── ProjectOpenListener.kt      # Автозапуск при открытии проекта
 ```
 
-### Building
+### Сборка
 
 ```bash
-# Build plugin
+# Собрать плагин
 ./gradlew buildPlugin
 
-# Run tests
+# Запустить тесты
 ./gradlew test
 
-# Run verification
+# Запустить проверку
 ./gradlew runPluginVerifier
 ```
 
-## Contributing
+## Участие в разработке
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Вклады приветствуются! Не стесняйтесь отправлять Pull Request.
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+1. Форкните репозиторий
+2. Создайте ветку для вашей функции (`git checkout -b feature/amazing-feature`)
+3. Закоммитьте ваши изменения (`git commit -m 'Add amazing feature'`)
+4. Запушьте в ветку (`git push origin feature/amazing-feature`)
+5. Откройте Pull Request
 
-## Related Projects
+## Связанные проекты
 
-- [tmux-plugin-worksnaps](https://github.com/curkan/tmux-plugin-worksnaps) - Worksnaps plugin for tmux
+- [tmux-plugin-worksnaps](https://github.com/curkan/tmux-plugin-worksnaps) - Плагин Worksnaps для tmux
 
-## License
+## Лицензия
 
-MIT License - see [LICENSE](LICENSE) file for details
+Лицензия MIT - см. файл [LICENSE](LICENSE) для деталей
 
-## Acknowledgments
+## Благодарности
 
-- Inspired by [tmux-plugin-worksnaps](https://github.com/curkan/tmux-plugin-worksnaps)
-- Built with [IntelliJ Platform Plugin SDK](https://plugins.jetbrains.com/docs/intellij/)
+- Вдохновлен [tmux-plugin-worksnaps](https://github.com/curkan/tmux-plugin-worksnaps)
+- Создан с помощью [IntelliJ Platform Plugin SDK](https://plugins.jetbrains.com/docs/intellij/)
 
-## Support
+## Поддержка
 
-If you encounter issues, please report them on GitHub:
+Если вы столкнулись с проблемами, сообщите о них на GitHub:
 https://github.com/curkan/phpstorm-plugin-worksnaps/issues
 
-## Changelog
+## История изменений
 
-### 1.0.0 (Initial Release)
+### 1.0.0 (Первый релиз)
 
-- Display worked hours in status bar
-- Show activity percentage with color coding
-- Show remaining time until target
-- Configurable settings
-- Auto-refresh with caching
-- Click to manually refresh
+- Отображение отработанных часов в строке состояния
+- Показ процента активности с цветовым кодированием
+- Показ оставшегося времени до цели
+- Настраиваемые параметры
+- Авто-обновление с кэшированием
+- Клик для ручного обновления
