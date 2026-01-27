@@ -21,7 +21,7 @@ class WorksnapsApiClient(
 ) {
     companion object {
         private const val API_BASE_URL = "https://api.worksnaps.com/api"
-        private const val TIMEOUT_MS = 10000
+        private const val TIMEOUT_MS = 30000
         private val LOG = Logger.getInstance(WorksnapsApiClient::class.java)
     }
 
