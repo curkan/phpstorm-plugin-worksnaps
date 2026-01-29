@@ -10,6 +10,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.wm.WindowManager
 import kotlinx.coroutines.*
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import java.time.Instant
 
 /**
@@ -105,13 +107,18 @@ class WorksnapsService {
                     cacheTimestamp = Instant.now().epochSecond
                     lastError = null
                 } else {
-                    LOG.error("API returned null data")
+                    LOG.warn("API returned null data - server might be unavailable or request timed out")
                     lastError = "Failed to fetch data from API"
                 }
+            } catch (e: SocketTimeoutException) {
+                lastError = "API request timed out. The server might be slow or unavailable."
+                LOG.warn("Timeout during refresh: ${e.message}")
+            } catch (e: UnknownHostException) {
+                lastError = "No internet connection or server unavailable."
+                LOG.warn("Network error during refresh: ${e.message}")
             } catch (e: Exception) {
                 lastError = e.message ?: "Unknown error"
-                LOG.error("Exception during refresh", e)
-                e.printStackTrace()
+                LOG.warn("Exception during refresh: ${e.message}")
             } finally {
                 isRefreshing = false
                 LOG.info("Refresh completed. Error: $lastError")

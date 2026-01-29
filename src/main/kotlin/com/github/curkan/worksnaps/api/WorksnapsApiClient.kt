@@ -5,6 +5,8 @@ import com.intellij.openapi.diagnostic.Logger
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import java.net.URL
 import java.time.Instant
 import java.time.LocalDate
@@ -63,9 +65,12 @@ class WorksnapsApiClient(
             }
 
             connection.disconnect()
+        } catch (e: SocketTimeoutException) {
+            LOG.warn("Timeout while getting user ID from Worksnaps API (${TIMEOUT_MS}ms). The API might be slow or unavailable.")
+        } catch (e: UnknownHostException) {
+            LOG.warn("Cannot resolve host: ${e.message}. Check your internet connection.")
         } catch (e: Exception) {
-            LOG.error("Exception while getting user ID", e)
-            e.printStackTrace()
+            LOG.warn("Exception while getting user ID: ${e.message}")
         }
 
         return userId
@@ -78,7 +83,7 @@ class WorksnapsApiClient(
         LOG.info("Getting today's time entries...")
         val currentUserId = getUserId()
         if (currentUserId == null) {
-            LOG.error("Cannot get time entries: User ID is null")
+            LOG.warn("Cannot get time entries: User ID is null")
             return null
         }
 
@@ -117,9 +122,12 @@ class WorksnapsApiClient(
             }
 
             connection.disconnect()
+        } catch (e: SocketTimeoutException) {
+            LOG.warn("Timeout while getting time entries from Worksnaps API (${TIMEOUT_MS}ms). The API might be slow or unavailable.")
+        } catch (e: UnknownHostException) {
+            LOG.warn("Cannot resolve host: ${e.message}. Check your internet connection.")
         } catch (e: Exception) {
-            LOG.error("Exception while getting time entries", e)
-            e.printStackTrace()
+            LOG.warn("Exception while getting time entries: ${e.message}")
         }
 
         return null
