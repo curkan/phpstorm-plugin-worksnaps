@@ -23,6 +23,9 @@ class WorksnapsSettings : PersistentStateComponent<WorksnapsSettings> {
     var showActivity: Boolean = true
     var showRemaining: Boolean = true
     var prefix: String = "WS:"
+    var redmineApiToken: String = ""
+    var trackerEndpointUrl: String = ""
+    var showTrackerRemaining: Boolean = false
 
     companion object {
         fun getInstance(): WorksnapsSettings {

@@ -26,7 +26,10 @@ class WorksnapsConfigurable : Configurable {
     private val prefixField = JBTextField()
     private val showTimeCheckbox = JBCheckBox("Show worked time")
     private val showActivityCheckbox = JBCheckBox("Show activity percentage")
-    private val showRemainingCheckbox = JBCheckBox("Show remaining time")
+    private val showRemainingCheckbox = JBCheckBox("Show remaining time (from Worksnaps)")
+    private val redmineApiTokenField = JBPasswordField()
+    private val trackerEndpointUrlField = JBTextField()
+    private val showTrackerRemainingCheckbox = JBCheckBox("Show remaining time from Tracker API")
 
     override fun getDisplayName(): String = "Worksnaps"
 
@@ -82,6 +85,27 @@ class WorksnapsConfigurable : Configurable {
                 }
             }
 
+            group("Tracker API (Redmine)") {
+                row {
+                    label("Endpoint URL:")
+                        .widthGroup("labels")
+                    cell(trackerEndpointUrlField)
+                        .align(AlignX.FILL)
+                        .comment("Full URL to the endpoint (e.g. https://tracker.example.com/worksnaps/my_hours.json)")
+                }
+                row {
+                    label("Redmine API Key:")
+                        .widthGroup("labels")
+                    cell(redmineApiTokenField)
+                        .align(AlignX.FILL)
+                        .comment("API key from your Redmine profile (Profile → API access key)")
+                }
+                row {
+                    cell(showTrackerRemainingCheckbox)
+                        .comment("Shows remaining hours today based on the configured endpoint URL")
+                }
+            }
+
             group("Update Settings") {
                 row {
                     label("Update Interval (seconds):")
@@ -131,7 +155,10 @@ class WorksnapsConfigurable : Configurable {
                 prefixField.text != settings.prefix ||
                 showTimeCheckbox.isSelected != settings.showTime ||
                 showActivityCheckbox.isSelected != settings.showActivity ||
-                showRemainingCheckbox.isSelected != settings.showRemaining
+                showRemainingCheckbox.isSelected != settings.showRemaining ||
+                String(redmineApiTokenField.password) != settings.redmineApiToken ||
+                trackerEndpointUrlField.text != settings.trackerEndpointUrl ||
+                showTrackerRemainingCheckbox.isSelected != settings.showTrackerRemaining
     }
 
     override fun apply() {
@@ -144,6 +171,9 @@ class WorksnapsConfigurable : Configurable {
         settings.showTime = showTimeCheckbox.isSelected
         settings.showActivity = showActivityCheckbox.isSelected
         settings.showRemaining = showRemainingCheckbox.isSelected
+        settings.redmineApiToken = String(redmineApiTokenField.password)
+        settings.trackerEndpointUrl = trackerEndpointUrlField.text
+        settings.showTrackerRemaining = showTrackerRemainingCheckbox.isSelected
 
         // Clear cache and restart auto-refresh with new settings
         val service = WorksnapsService.getInstance()
@@ -162,5 +192,8 @@ class WorksnapsConfigurable : Configurable {
         showTimeCheckbox.isSelected = settings.showTime
         showActivityCheckbox.isSelected = settings.showActivity
         showRemainingCheckbox.isSelected = settings.showRemaining
+        redmineApiTokenField.text = settings.redmineApiToken
+        trackerEndpointUrlField.text = settings.trackerEndpointUrl
+        showTrackerRemainingCheckbox.isSelected = settings.showTrackerRemaining
     }
 }

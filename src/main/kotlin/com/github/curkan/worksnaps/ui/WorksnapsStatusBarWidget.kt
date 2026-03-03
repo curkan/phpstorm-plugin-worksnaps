@@ -1,5 +1,6 @@
 package com.github.curkan.worksnaps.ui
 
+import com.github.curkan.worksnaps.api.TrackerHoursData
 import com.github.curkan.worksnaps.api.WorksnapsData
 import com.github.curkan.worksnaps.service.WorksnapsService
 import com.github.curkan.worksnaps.settings.WorksnapsSettings
@@ -133,7 +134,7 @@ class WorksnapsStatusBarWidget(private val project: Project) : CustomStatusBarWi
             val timeString = formatTime(data.hours)
             component.append(timeString, defaultTextAttributes)
 
-            // Add remaining time with color if enabled
+            // Add remaining time with color if enabled (from Worksnaps)
             if (settings.showRemaining) {
                 component.append(" ", defaultTextAttributes)
                 formatRemainingTimeWithColor(data.hours)
@@ -144,6 +145,19 @@ class WorksnapsStatusBarWidget(private val project: Project) : CustomStatusBarWi
         if (settings.showActivity) {
             component.append(" | ", defaultTextAttributes)
             formatActivityWithColor(data.activity)
+        }
+
+        // Add tracker remaining time if enabled
+        if (settings.showTrackerRemaining) {
+            val trackerData = service.getTrackerData()
+            if (trackerData != null) {
+                component.append(" | ", defaultTextAttributes)
+                formatTrackerRemainingWithColor(trackerData)
+            } else if (service.getTrackerLastError() != null) {
+                component.append(" | T:⚠", SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, COLOR_ORANGE))
+            } else if (settings.redmineApiToken.isNotEmpty()) {
+                component.append(" | T:...", defaultTextAttributes)
+            }
         }
 
         // Add error indicator if using cached data
@@ -193,6 +207,31 @@ class WorksnapsStatusBarWidget(private val project: Project) : CustomStatusBarWi
 
         val color = if (roundedRemaining < 0) COLOR_GREEN else COLOR_RED // Green for overtime, Red for remaining
 
+        component.append(timeStr, SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color))
+    }
+
+    /**
+     * Format remaining time from Tracker API (user_minutes vs target hours)
+     * Green for overtime, Red for remaining
+     */
+    private fun formatTrackerRemainingWithColor(trackerData: TrackerHoursData) {
+        // hours_on_now — accumulated required hours up to today (in hours)
+        // user_minutes — total worked minutes this month
+        val requiredMinutes = trackerData.hoursOnNow * 60
+        val workedMinutes = trackerData.userMinutes
+        val diff = workedMinutes - requiredMinutes // positive = overtime, negative = undertime
+
+        val absMinutes = abs(diff)
+        val hours = absMinutes / 60
+        val mins = absMinutes % 60
+
+        val timeStr = if (diff >= 0) {
+            String.format("T:(+%d:%02d)", hours, mins)
+        } else {
+            String.format("T:(-%d:%02d)", hours, mins)
+        }
+
+        val color = if (diff >= 0) COLOR_GREEN else COLOR_RED
         component.append(timeStr, SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color))
     }
 

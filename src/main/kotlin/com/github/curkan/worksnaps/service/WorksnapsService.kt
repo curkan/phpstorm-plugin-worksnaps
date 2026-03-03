@@ -1,5 +1,7 @@
 package com.github.curkan.worksnaps.service
 
+import com.github.curkan.worksnaps.api.TrackerApiClient
+import com.github.curkan.worksnaps.api.TrackerHoursData
 import com.github.curkan.worksnaps.api.WorksnapsApiClient
 import com.github.curkan.worksnaps.api.WorksnapsData
 import com.github.curkan.worksnaps.settings.WorksnapsSettings
@@ -23,6 +25,11 @@ class WorksnapsService {
     private var cacheTimestamp: Long = 0
     private var lastError: String? = null
     private var isRefreshing = false
+
+    private var cachedTrackerData: TrackerHoursData? = null
+    private var trackerCacheTimestamp: Long = 0
+    private var trackerLastError: String? = null
+    private var isTrackerRefreshing = false
 
     private val coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var refreshJob: Job? = null
@@ -59,6 +66,32 @@ class WorksnapsService {
 
         return cachedData
     }
+
+    /**
+     * Get current tracker hours data (from cache or fresh)
+     */
+    fun getTrackerData(): TrackerHoursData? {
+        val settings = WorksnapsSettings.getInstance()
+
+        if (!settings.showTrackerRemaining || settings.redmineApiToken.isEmpty() || settings.trackerEndpointUrl.isEmpty()) {
+            return null
+        }
+
+        if (isTrackerCacheValid()) {
+            return cachedTrackerData
+        }
+
+        if (!isTrackerRefreshing) {
+            refreshTrackerData()
+        }
+
+        return cachedTrackerData
+    }
+
+    /**
+     * Get last tracker error message
+     */
+    fun getTrackerLastError(): String? = trackerLastError
 
     /**
      * Get last error message
@@ -110,6 +143,11 @@ class WorksnapsService {
                     LOG.warn("API returned null data - server might be unavailable or request timed out")
                     lastError = "Failed to fetch data from API"
                 }
+
+                // Also refresh tracker data if configured
+                if (settings.showTrackerRemaining && settings.redmineApiToken.isNotEmpty() && settings.trackerEndpointUrl.isNotEmpty()) {
+                    refreshTrackerData()
+                }
             } catch (e: SocketTimeoutException) {
                 lastError = "API request timed out. The server might be slow or unavailable."
                 LOG.warn("Timeout during refresh: ${e.message}")
@@ -124,6 +162,45 @@ class WorksnapsService {
                 LOG.info("Refresh completed. Error: $lastError")
 
                 // Update status bar widget
+                updateStatusBar()
+            }
+        }
+    }
+
+    /**
+     * Refresh tracker hours data from Redmine API
+     */
+    fun refreshTrackerData() {
+        val settings = WorksnapsSettings.getInstance()
+
+        if (settings.redmineApiToken.isEmpty() || settings.trackerEndpointUrl.isEmpty()) {
+            trackerLastError = "Redmine API key or Tracker endpoint URL not configured"
+            return
+        }
+
+        LOG.info("Starting tracker data refresh...")
+        isTrackerRefreshing = true
+        trackerLastError = null
+
+        coroutineScope.launch {
+            try {
+                val client = TrackerApiClient(settings.redmineApiToken, settings.trackerEndpointUrl)
+                val data = client.getMyHours()
+
+                if (data != null) {
+                    LOG.info("Tracker data received: userMinutes=${data.userMinutes}")
+                    cachedTrackerData = data
+                    trackerCacheTimestamp = Instant.now().epochSecond
+                    trackerLastError = null
+                } else {
+                    LOG.warn("Tracker API returned null data")
+                    trackerLastError = "Failed to fetch data from Tracker API"
+                }
+            } catch (e: Exception) {
+                trackerLastError = e.message ?: "Unknown error"
+                LOG.warn("Exception during tracker refresh: ${e.message}")
+            } finally {
+                isTrackerRefreshing = false
                 updateStatusBar()
             }
         }
@@ -190,11 +267,26 @@ class WorksnapsService {
     }
 
     /**
+     * Check if tracker cache is still valid
+     */
+    private fun isTrackerCacheValid(): Boolean {
+        if (cachedTrackerData == null) return false
+
+        val now = Instant.now().epochSecond
+        val age = now - trackerCacheTimestamp
+
+        return age < CACHE_TTL_SECONDS
+    }
+
+    /**
      * Clear cache
      */
     fun clearCache() {
         cachedData = null
         cacheTimestamp = 0
         lastError = null
+        cachedTrackerData = null
+        trackerCacheTimestamp = 0
+        trackerLastError = null
     }
 }
