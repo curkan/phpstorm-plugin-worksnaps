@@ -143,11 +143,6 @@ class WorksnapsService {
                     LOG.warn("API returned null data - server might be unavailable or request timed out")
                     lastError = "Failed to fetch data from API"
                 }
-
-                // Also refresh tracker data if configured
-                if (settings.showTrackerRemaining && settings.redmineApiToken.isNotEmpty() && settings.trackerEndpointUrl.isNotEmpty()) {
-                    refreshTrackerData()
-                }
             } catch (e: SocketTimeoutException) {
                 lastError = "API request timed out. The server might be slow or unavailable."
                 LOG.warn("Timeout during refresh: ${e.message}")
@@ -158,8 +153,15 @@ class WorksnapsService {
                 lastError = e.message ?: "Unknown error"
                 LOG.warn("Exception during refresh: ${e.message}")
             } finally {
+                // Always update timestamp to prevent retry loop on errors
+                cacheTimestamp = Instant.now().epochSecond
                 isRefreshing = false
                 LOG.info("Refresh completed. Error: $lastError")
+
+                // Refresh tracker data independently of Worksnaps result
+                if (settings.showTrackerRemaining && settings.redmineApiToken.isNotEmpty() && settings.trackerEndpointUrl.isNotEmpty()) {
+                    refreshTrackerData()
+                }
 
                 // Update status bar widget
                 updateStatusBar()
@@ -190,7 +192,6 @@ class WorksnapsService {
                 if (data != null) {
                     LOG.info("Tracker data received: userMinutes=${data.userMinutes}")
                     cachedTrackerData = data
-                    trackerCacheTimestamp = Instant.now().epochSecond
                     trackerLastError = null
                 } else {
                     LOG.warn("Tracker API returned null data")
@@ -200,6 +201,8 @@ class WorksnapsService {
                 trackerLastError = e.message ?: "Unknown error"
                 LOG.warn("Exception during tracker refresh: ${e.message}")
             } finally {
+                // Always update timestamp to prevent retry loop on errors
+                trackerCacheTimestamp = Instant.now().epochSecond
                 isTrackerRefreshing = false
                 updateStatusBar()
             }
@@ -258,7 +261,7 @@ class WorksnapsService {
      * Check if cache is still valid
      */
     private fun isCacheValid(): Boolean {
-        if (cachedData == null) return false
+        if (cacheTimestamp == 0L) return false
 
         val now = Instant.now().epochSecond
         val age = now - cacheTimestamp
@@ -267,10 +270,10 @@ class WorksnapsService {
     }
 
     /**
-     * Check if tracker cache is still valid
+     * Check if tracker cache is still valid (includes error cooldown)
      */
     private fun isTrackerCacheValid(): Boolean {
-        if (cachedTrackerData == null) return false
+        if (trackerCacheTimestamp == 0L) return false
 
         val now = Instant.now().epochSecond
         val age = now - trackerCacheTimestamp

@@ -17,6 +17,22 @@ class TrackerApiClient(
     companion object {
         private const val TIMEOUT_MS = 30000
         private val LOG = Logger.getInstance(TrackerApiClient::class.java)
+        private var totalRequests: Long = 0
+        private var requestsToday: Long = 0
+        private var lastResetDay: Int = -1
+
+        fun getStats(): String = "TrackerAPI: total=$totalRequests, today=$requestsToday"
+
+        private fun trackRequest() {
+            val today = java.time.LocalDate.now().dayOfMonth
+            if (today != lastResetDay) {
+                requestsToday = 0
+                lastResetDay = today
+            }
+            totalRequests++
+            requestsToday++
+            LOG.info("TrackerAPI request #$requestsToday today (#$totalRequests total)")
+        }
     }
 
     private val gson = Gson()
@@ -29,6 +45,7 @@ class TrackerApiClient(
 
         try {
             val url = URL(endpointUrl)
+            trackRequest()
             LOG.info("Requesting: $url")
 
             val connection = url.openConnection() as HttpURLConnection

@@ -25,6 +25,22 @@ class WorksnapsApiClient(
         private const val API_BASE_URL = "https://api.worksnaps.com/api"
         private const val TIMEOUT_MS = 30000
         private val LOG = Logger.getInstance(WorksnapsApiClient::class.java)
+        private var totalRequests: Long = 0
+        private var requestsToday: Long = 0
+        private var lastResetDay: Int = -1
+
+        fun getStats(): String = "WorksnapsAPI: total=$totalRequests, today=$requestsToday"
+
+        private fun trackRequest() {
+            val today = java.time.LocalDate.now().dayOfMonth
+            if (today != lastResetDay) {
+                requestsToday = 0
+                lastResetDay = today
+            }
+            totalRequests++
+            requestsToday++
+            LOG.info("WorksnapsAPI request #$requestsToday today (#$totalRequests total)")
+        }
     }
 
     private val gson = Gson()
@@ -41,6 +57,7 @@ class WorksnapsApiClient(
         LOG.info("Fetching user ID from API...")
         try {
             val url = URL("$API_BASE_URL/me.xml")
+            trackRequest()
             LOG.info("Requesting: ${url}")
             val connection = url.openConnection() as HttpURLConnection
             connection.requestMethod = "GET"
@@ -98,6 +115,7 @@ class WorksnapsApiClient(
             val urlString = "$API_BASE_URL/projects/$projectId/time_entries.xml" +
                     "?from_timestamp=$todayStart&to_timestamp=$now&user_ids=$currentUserId"
 
+            trackRequest()
             LOG.info("Requesting time entries: $urlString")
             val url = URL(urlString)
             val connection = url.openConnection() as HttpURLConnection

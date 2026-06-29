@@ -1,6 +1,8 @@
 package com.github.curkan.worksnaps.ui
 
+import com.github.curkan.worksnaps.api.TrackerApiClient
 import com.github.curkan.worksnaps.api.TrackerHoursData
+import com.github.curkan.worksnaps.api.WorksnapsApiClient
 import com.github.curkan.worksnaps.api.WorksnapsData
 import com.github.curkan.worksnaps.service.WorksnapsService
 import com.github.curkan.worksnaps.settings.WorksnapsSettings
@@ -81,12 +83,14 @@ class WorksnapsStatusBarWidget(private val project: Project) : CustomStatusBarWi
 
     private fun getTooltipText(): String {
         val error = service.getLastError()
-        return when {
+        val stats = "${WorksnapsApiClient.getStats()}\n${TrackerApiClient.getStats()}"
+        val base = when {
             error != null -> "Worksnaps Error: $error\nClick to retry"
             service.isUsingCachedData() -> "Worksnaps (using cached data)\nClick to refresh"
             settings.apiToken.isEmpty() || settings.projectId.isEmpty() -> "Worksnaps: Not configured\nGo to Settings → Tools → Worksnaps"
             else -> "Worksnaps Time Tracker\nClick to refresh"
         }
+        return "$base\n---\n$stats"
     }
 
     fun updateComponent() {
